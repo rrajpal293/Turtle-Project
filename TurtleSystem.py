@@ -89,7 +89,7 @@ class TurtleSystem():
     def Simulate(self):
         self.calculateSimDates()
         for dt in _data['Date']:
-            self.SimulateOneDay(dt)
+            self.SimulateOneDay(dt) 
 
     #def calculateSignal(self, dt):
     
