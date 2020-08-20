@@ -12,9 +12,9 @@ class HistData():
 
     def __init__(self, strFileName, strDataName):
         df = pd.read_excel(strFileName, nBreakout = 20)
-        # rename PX_LAST column to Close
+        # rename PX_LAST column to CLose
         df = df.rename(columns = {'PX_LAST':'Close'}) 
-        self._numdates = len(df)
+        self._numDates = len(df)
         self._data = df
         self._description = strDataName
         
@@ -25,4 +25,4 @@ class HistData():
         return self._description
 
     def NumDates(self):
-    	return self._numDates
+        return self._numDates
