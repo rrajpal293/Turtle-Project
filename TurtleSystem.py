@@ -1,30 +1,3 @@
-TurtleSystem.py
-Details
-Activity
-Sharing Info
-Not shared
-General Info
-Type
-Text
-Size
-10 KB (10,308 bytes)
-Storage used
-65 KB (66,866 bytes)
-Location
-Crescent
-Owner
-me
-Modified
-10:44 AM by me
-Opened
-10:44 AM by me
-Created
-Aug 18, 2020 with Google Drive Web
-Description
-Add a description
-Download permissions
-Viewers can download
-
 import numpy as np
 import pandas as pd
 import math
@@ -42,7 +15,7 @@ from scipy.stats import norm
 
 class TurtleSystem():  
     # Inputs & intermediate values
-    _data = None # This contains the raw historical data as wellas  processed data such as rolling highs, lows, N, TR,  etc
+    _data = None # This contains the raw historical data as well as processed data such as rolling highs, lows, N, TR,  etc
     _breakoutLength1 = None # the rolling window length to calculate System 1 breakout signal
     _breakoutLength2 = None # the rolling window length to calculate System 2 breakout signal
     _exitLength1 = None # the rolling window length to calculate System 1 exit signal
@@ -70,14 +43,14 @@ class TurtleSystem():
     def getData(self):
         return self._data
 
-    def setData(self, dfhistData) #populate _data with the raw data
-        self._data = dfHistData
+    def setData(self, dfHistData): #populate _data with the raw data
+        self._data = dfHistData.Data()
         self.processRawData()
 
     def getResults(self):
         return self._results
 
-    def processRaWData() 
+    def processRawData(self): 
         # create new columns based on existing columns
         self._data['PrevClose'] = self._data['Close'].shift(1)
         # create a placeholder column for True Range
@@ -104,7 +77,7 @@ class TurtleSystem():
         for ind in self._data.index:
             if ind > 0:
                 self._data['TR'][ind] = max(self._data['High'][ind-1] - self._data['Low'][ind-1], self._data['High'][ind-1] - self._data['PrevClose'][ind], self._data['PrevClose'][ind] - self._data['Low'][ind-1])
-            else;
+            else:
                 self._data['TR'][ind] = max(self._data['High'][ind] - self._data['Low'][ind], self._data['High'][ind] - self._data['PrevClose'][ind], self._data['PrevClose'][ind] - self._data['Low'][ind])
 
     def populateN(self): # N is the 20-day exponential moving average of TR
@@ -113,9 +86,9 @@ class TurtleSystem():
             if ind >= self._breakoutLength1:
                 self._data['N'][ind] = 0.95 * self._data['N'][ind-1] + 0.05 * self._data['TR'][ind]
 
-    def calculateSimDates(self): #calculates the start andend date for thesimulation
-        self._dxSimulationStart = self._data['Date'].iloc[_breakoutLength1 + 1]
-        self._dxSimulationEnd = self._data['Date'].iloc[self._data.NumDates()]
+    def calculateSimDates(self): #calculates the start and end date for the simulation
+        self._dxSimulationStart = self._data['Date'].iloc[self._breakoutLength1 + 1]
+        self._dxSimulationEnd = self._data['Date'].iloc[len(self._data)-1]
 
     def SimulateOneDay(self, dt, nSimDay): # simulates one day or trading
         if self._data['Date'].loc[dt] >= self._dxSimulationStart & self._data['Date'].loc[dt] <= self._dxSimulationEnd:
@@ -129,9 +102,9 @@ class TurtleSystem():
     def Simulate(self): #simulates trading between simulation start date and simulation end date
         self.calculateSimDates()
         numSimDays = 0
-        for dt in _data['Date']:
+        for dt in self._data['Date']:
             self.SimulateOneDay(dt, numSimDays)
-            numSimDays++
+            numSimDays = numSimDays + 1
         
 
     def calculateSignal(self, dt, nSimDay): #1 = buy, -1 = sell short, 0.5/-0.5 = exit because exit rule was hit, 0.25/-0.25 = exit because rolling stop loss was hit, 0 otherwise
@@ -139,7 +112,7 @@ class TurtleSystem():
             return 1
         if self._data['Entry1DayLow'].loc[dt] > self._data['Low'].loc[dt]:
             return -1
-        if nSimDays > 0
+        if nSimDays > 0:
             if ((self._data['Exit1DayHigh'].loc[dt] < self._data['High'].loc[dt]) and (_BODUnits < 0)):
                 return 0.5
             if ((self._data['Exit1DayLow'].loc[dt] > self._data['Low'].loc[dt]) and (_BODUnits > 0)):
@@ -168,7 +141,7 @@ class TurtleSystem():
             if additionalUnits == 0:
                 return self._results['Entry Level'].iloc[nSimDay-1]   
             else:
-                return = (self._results['Entry Level'].iloc[nSimDay-1] * self._currentBODUnits + self._data['Close'].loc[dt] * additionalUnits)/(self._currentBODUnits + additionalUnits)
+                return (self._results['Entry Level'].iloc[nSimDay-1] * self._currentBODUnits + self._data['Close'].loc[dt] * additionalUnits)/(self._currentBODUnits + additionalUnits)
         # If there is already a short position that is being aaded to then calculate additional number of units, 
         # which depends on how much the price moved from entry level divided by 0.5 * N
         if ((Signal <= 0) and (self._currentBODUnits < 0)):
@@ -177,7 +150,7 @@ class TurtleSystem():
             if additionalUnits == 0:
                 return self._results['Entry Level'].iloc[nSimDay-1]   
             else:
-                return = (self._results['Entry Level'].iloc[nSimDay-1] * self._currentBODUnits + self._data['Close'].loc[dt] * additionalUnits)/(self._currentBODUnits + additionalUnits) 
+                return (self._results['Entry Level'].iloc[nSimDay-1] * self._currentBODUnits + self._data['Close'].loc[dt] * additionalUnits)/(self._currentBODUnits + additionalUnits) 
         return None
            
     def calculateExitPoint(self, Signal, dt):  # calculates the exit point
