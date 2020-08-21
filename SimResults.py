@@ -17,19 +17,18 @@ class SimResults():
     def Data(self):
         return self._data
 
-    def Append(self, dt, Signal, EntryLevel, ExitLevel, Units):
-    	if sum(self._data['Date'] == dt) == 0: # if date does not exist then append otherise update
-    		self._data.append({'data' : dt, 'Signal': Signal, 'Entry Level' : EntryLevel, 'Exit Level' : ExitLevel, 'BOD Units' : BODUnits, 'EODUnits' : EODUnits})
-    	else:
-    		self.Update(dt, 'Signal',Signal)
-    		self.Update(dt, 'Entry Level', EntryLevel)
-    		self.Update(dt, 'Exit Level', ExitLevel)
-    		self.Update(dt, 'BOD Units', Units)
-    		self.Update(dt, 'EOD Units', Units)
+    def Append(self, dt, Signal, EntryLevel, ExitLevel, BODUnits, EODUnits):
+    	#if sum(self._data['Date'] == dt) == 0: # if date does not exist then append otherise update
+        self._data = self._data.append({'Date' : dt, 'Signal': Signal, 'Entry Level' : EntryLevel, 'Exit Level' : ExitLevel, 'BOD Units' : BODUnits, 'EOD Units' : EODUnits}, ignore_index = True)
+    	#else:
+    	#	self.Update(dt, 'Signal',Signal)
+    	#	self.Update(dt, 'Entry Level', EntryLevel)
+    	#	self.Update(dt, 'Exit Level', ExitLevel)
+    	#	self.Update(dt, 'BOD Units', BODUnits)
+    	#	self.Update(dt, 'EOD Units', EODUnits)
 
     def Update(self, dt, strField, value):
         if sum(_data['Date'] == dt) == 1: # only update if date already exists, othwrwise append
         	df.loc[df['Date'] == dt, strField] = value
         else:
         	self._data.append({'data' : dt, strField : value})
- 
