@@ -4,15 +4,12 @@ import math
 import matplotlib.pyplot as plt
 from numpy import log, exp, sqrt
 from scipy.stats import norm
+from Option_Vals import Option_Vals
 
-_data = pd.read_excel('USDJPYDailyPrices.xlsx', sheet_name='Sheet1')  
-ts = TurtleSystem(_data)
- 
-# ts.populateRollingHighsAndLows()
-# ts.populateTR()
-# ts.populateN()
-# hd = HistData(_data, 'JPYUSD')
-# print (hd)
-#tr = TurtleSystem(20)
-#ts.setData(hd)
-#dff = ts.getData()
+url = '/Users/rohunrajpal/Python Code/FX Options/USDJPY Daily Prices.xlsx'
+hd = HistData(url, 'JPYUSD')
+ts = TurtleSystem(20)
+ts.setData(hd)
+ts.Simulate()
+results = ts.getResults()
+print(results.Data())
