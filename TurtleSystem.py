@@ -57,6 +57,7 @@ class TurtleSystem():
     def processRawData(self): 
         # create new columns based on existing columns
         self._data['PrevClose'] = self._data['Close'].shift(1)
+        self._data['Returns'] = np.log(self._data['Close']/self._data['PrevClose'])
         # create a placeholder column for True Range
         self._data['TR'] = np.ones((_numdates,1)) * np.nan
         # create a placeholder column for N
@@ -96,15 +97,27 @@ class TurtleSystem():
 
     def SimulateOneDay(self, dt, nSimDay): # simulates one day or trading
         #if (self._data['Date'].iloc[nSimDay + self._breakoutLength1-1] >= self._dxSimulationStart) and (self._data['Date'].iloc[nSimDay + self._breakoutLength1-1] <= self._dxSimulationEnd):
+        if self._currentEODUnits == 0:
+            lastEntryPoint = None
+        else:
+            lastEntryPoint = self._currentEntryPoint
         self._resultsdf = self._results.Data()
         print(len(self._resultsdf))
         self._currentEODUnits = self._currentBODUnits
         self._currentSignal = self.calculateSignal(dt, nSimDay)
         self._currentEntryPoint = self.calculateEntryPoint(self._currentSignal, dt, nSimDay)
+        if self._currentEntryPoint == None:
+            self._currentEntryPoint = lastEntryPoint
         self._currentExitPoint = self.calculateExitPoint(self._currentSignal, dt, nSimDay)
-        print([self._currentSignal, self._currentEntryPoint, self._currentExitPoint, self._currentBODUnits, self._currentEODUnits])
-        self._results.Append(dt, self._currentSignal, self._currentEntryPoint, self._currentExitPoint, self._currentBODUnits, self._currentEODUnits)
+        if self._currentBODUnits == 0:
+            strat_return = 0
+        else:
+            strat_return = (self._currentBODUnits/4 ) * self._data['Returns'].iloc[self._breakoutLength1+nSimDay-1]
+        #print([self._currentSignal, self._currentEntryPoint, self._currentExitPoint, self._currentBODUnits, self._currentEODUnits])
+        self._results.Append(dt, self._currentSignal, self._currentEntryPoint, self._currentExitPoint, self._currentBODUnits, self._currentEODUnits, strat_return)
         self._currentBODUnits = self._currentEODUnits
+        lastEntryPoint = self._currentEntryPoint
+
 
     def Simulate(self): #simulates trading between simulation start date and simulation end date
         self.calculateSimDates()
@@ -138,13 +151,12 @@ class TurtleSystem():
 
     def calculateEntryPoint(self, Signal, dtt, nSimDay): # calculates the entry point for a new unit(s) and update thenumber of units
         dt = self._breakoutLength1+nSimDay-1
-        print([nSimDay, dt])
         if abs(Signal) < 1 and abs(Signal) > 0: # is Signal was an exit signal, then there is no entry point
             return None
-        if ((Signal == 1) and (self._currentBODUnits <= 0)): # if signal is a buy and ssytem was not already long then entry point s today's close
+        if ((Signal == 1) and (self._currentBODUnits <= 0)): # if signal is a buy and system was not already long then entry point is today's close
             self._currentEODUnits = 1
             return max(self._data['Entry1DayHigh'].iloc[dt], self._data['Close'].iloc[dt])
-        if ((Signal == -1) and (self._currentBODUnits >= 0)): # if signal is a sell and ssytem was not already short then entry point s today's close
+        if ((Signal == -1) and (self._currentBODUnits >= 0)): # if signal is a sell and system was not already short then entry point is today's close
             self._currentEODUnits = -1
             return min(self._data['Entry1DayLow'].iloc[dt], self._data['Close'].iloc[dt])
         if ((abs(Signal) == 1) and (self._currentBODUnits == 4)): # if we already have 4 units, then we don't add to the position
@@ -152,7 +164,7 @@ class TurtleSystem():
         # If there is already a long position that is being aaded to then calculate additional number of units, 
         # which depends on how much the price moved from entry level divided by 0.5 * N
         if ((Signal >= 0) and (self._currentBODUnits > 0)): 
-            additionalUnits = min(4-self._currentBODUnits, (self._data['High'].iloc[dt] - self._resultsdf['Entry Level'].iloc[nSimDay-1])/(0.5 * self._data['N'].iloc[dt]))
+            additionalUnits = max(0,min(4-self._currentBODUnits, round((self._data['High'].iloc[dt] - self._resultsdf['Entry Level'].iloc[nSimDay-1])/(0.5 * self._data['N'].iloc[dt]))))
             self._currentEODUnits = self._currentBODUnits + additionalUnits
             if additionalUnits == 0:
                 return self._resultsdf['Entry Level'].iloc[nSimDay-1]   
@@ -161,7 +173,7 @@ class TurtleSystem():
         # If there is already a short position that is being aaded to then calculate additional number of units, 
         # which depends on how much the price moved from entry level divided by 0.5 * N
         if ((Signal <= 0) and (self._currentBODUnits < 0)):
-            additionalUnits = min(-4-self._currentBODUnits, (self._data['Low'].iloc[dt] - self._resultsdf['Entry Level'].iloc[nSimDay-1])/(0.5 * self._data['N'].iloc[dt]))
+            additionalUnits = min(0,max(-4-self._currentBODUnits, round((self._data['Low'].iloc[dt] - self._resultsdf['Entry Level'].iloc[nSimDay-1])/(0.5 * self._data['N'].iloc[dt]))))
             self._currentEODUnits = self._currentBODUnits + additionalUnits
             if additionalUnits == 0:
                 return self._resultsdf['Entry Level'].iloc[nSimDay-1]   
